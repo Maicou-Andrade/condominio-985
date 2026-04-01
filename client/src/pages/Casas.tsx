@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../trpc';
 import { Home, Plus, Trash2, User, Mail, Phone, X, Pencil } from 'lucide-react';
+import { maskPhone } from '../utils';
 import toast from 'react-hot-toast';
 
 const CASAS_OPTIONS = ['Casa 01', 'Casa 02', 'Casa 03', 'Casa 04', 'Casa 05'];
@@ -49,7 +50,7 @@ export default function CasasPage() {
       numero: casa.numero,
       nomeMorador: casa.nomeMorador,
       email: casa.email,
-      telefone: casa.telefone || '',
+      telefone: maskPhone(casa.telefone || ''),
     });
     setShowModal(true);
   }
@@ -249,7 +250,7 @@ export default function CasasPage() {
                 <input
                   type="text"
                   value={form.telefone}
-                  onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
+                  onChange={e => setForm(f => ({ ...f, telefone: maskPhone(e.target.value) }))}
                   placeholder="(84) 99999-9999"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue text-sm"
                 />
