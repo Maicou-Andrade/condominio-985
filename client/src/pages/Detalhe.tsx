@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../trpc';
+import { maskCurrency, unmaskCurrency } from '../utils';
 import {
   ArrowLeft, Lightbulb, Clock, CheckCircle, XCircle, Trophy, AlertTriangle,
   ThumbsUp, ThumbsDown, DollarSign, MessageCircle, Share2, X
@@ -278,7 +279,7 @@ export default function DetalhePage() {
                 const initial: Record<string, string> = {};
                 const interessados = allCasas.filter((c: any) => casasInteressadas.includes(c.id));
                 const valorPorCasa = valorEstimado / interessados.length;
-                interessados.forEach((c: any) => { initial[String(c.id)] = valorPorCasa.toFixed(2); });
+                interessados.forEach((c: any) => { initial[String(c.id)] = maskCurrency((valorPorCasa * 100).toFixed(0)); });
                 setDivisaoValues(initial);
                 setShowDivisaoModal(true);
               }}
@@ -467,10 +468,10 @@ export default function DetalhePage() {
                   <div className="flex items-center gap-1">
                     <span className="text-sm text-gray-400">R$</span>
                     <input
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="numeric"
                       value={divisaoValues[String(casa.id)] || ''}
-                      onChange={e => setDivisaoValues(v => ({ ...v, [String(casa.id)]: e.target.value }))}
+                      onChange={e => setDivisaoValues(v => ({ ...v, [String(casa.id)]: maskCurrency(e.target.value) }))}
                       className="w-28 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-right focus:outline-none focus:ring-2 focus:ring-accent-blue/30"
                     />
                   </div>
@@ -481,7 +482,7 @@ export default function DetalhePage() {
             <button
               onClick={() => {
                 const vals: Record<string, number> = {};
-                Object.entries(divisaoValues).forEach(([k, v]) => { vals[k] = parseFloat(v) || 0; });
+                Object.entries(divisaoValues).forEach(([k, v]) => { vals[k] = parseFloat(unmaskCurrency(v)) || 0; });
                 avancarMutation.mutate({
                   sugestaoId: sug.id,
                   casasIds: allCasas.filter((c: any) => casasInteressadas.includes(c.id)).map((c: any) => c.id),
@@ -510,10 +511,10 @@ export default function DetalhePage() {
               <div>
                 <label className="block text-sm font-semibold text-navy-500 mb-1.5">Valor Total Gasto - Produtos (R$)</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="numeric"
                   value={concluirForm.valorProduto}
-                  onChange={e => setConcluirForm(f => ({ ...f, valorProduto: e.target.value }))}
+                  onChange={e => setConcluirForm(f => ({ ...f, valorProduto: maskCurrency(e.target.value) }))}
                   placeholder="0,00"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                 />
@@ -521,10 +522,10 @@ export default function DetalhePage() {
               <div>
                 <label className="block text-sm font-semibold text-navy-500 mb-1.5">Valor Total Gasto - Serviço (R$)</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="numeric"
                   value={concluirForm.valorServico}
-                  onChange={e => setConcluirForm(f => ({ ...f, valorServico: e.target.value }))}
+                  onChange={e => setConcluirForm(f => ({ ...f, valorServico: maskCurrency(e.target.value) }))}
                   placeholder="0,00"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                 />
@@ -535,8 +536,8 @@ export default function DetalhePage() {
               onClick={() => {
                 concluirMutation.mutate({
                   sugestaoId: sug.id,
-                  valorTotalGastoProduto: parseFloat(concluirForm.valorProduto) || 0,
-                  valorTotalGastoServico: parseFloat(concluirForm.valorServico) || 0,
+                  valorTotalGastoProduto: parseFloat(unmaskCurrency(concluirForm.valorProduto)) || 0,
+                  valorTotalGastoServico: parseFloat(unmaskCurrency(concluirForm.valorServico)) || 0,
                 });
               }}
               disabled={concluirMutation.isPending}

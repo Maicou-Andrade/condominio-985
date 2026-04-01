@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../trpc';
+import { useAuth } from '../auth';
+import { maskCurrency, unmaskCurrency } from '../utils';
 import { Lightbulb, Plus, Tag, X, ChevronRight, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -8,12 +10,13 @@ const ITEM_TIPOS = ['Portão', 'Câmera', 'Vidro', 'Fechadura', 'Portão Pequeno
 type FormStep = 'tipo' | 'item' | 'valor' | 'detalhes';
 
 export default function SugestoesPage() {
+  const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [showCatModal, setShowCatModal] = useState(false);
   const [catNome, setCatNome] = useState('');
   const [step, setStep] = useState<FormStep>('tipo');
   const [form, setForm] = useState({
-    casaId: 0,
+    casaId: user?.casaId || 0,
     tipoSugestao: '',
     categoriaId: 0,
     itemTipo: '',
@@ -54,7 +57,7 @@ export default function SugestoesPage() {
     setShowModal(false);
     setStep('tipo');
     setForm({
-      casaId: 0, tipoSugestao: '', categoriaId: 0, itemTipo: '', itemOutros: '',
+      casaId: user?.casaId || 0, tipoSugestao: '', categoriaId: 0, itemTipo: '', itemOutros: '',
       temValor: false, valorProduto: '', valorServico: '',
       sugestaoValorProduto: '', sugestaoValorServico: '', motivo: '', melhoria: '',
     });
@@ -72,10 +75,10 @@ export default function SugestoesPage() {
       itemTipo: form.itemTipo || undefined,
       itemOutros: form.itemOutros || undefined,
       temValor: form.temValor,
-      valorProduto: form.valorProduto ? parseFloat(form.valorProduto) : undefined,
-      valorServico: form.valorServico ? parseFloat(form.valorServico) : undefined,
-      sugestaoValorProduto: form.sugestaoValorProduto ? parseFloat(form.sugestaoValorProduto) : undefined,
-      sugestaoValorServico: form.sugestaoValorServico ? parseFloat(form.sugestaoValorServico) : undefined,
+      valorProduto: form.valorProduto ? parseFloat(unmaskCurrency(form.valorProduto)) : undefined,
+      valorServico: form.valorServico ? parseFloat(unmaskCurrency(form.valorServico)) : undefined,
+      sugestaoValorProduto: form.sugestaoValorProduto ? parseFloat(unmaskCurrency(form.sugestaoValorProduto)) : undefined,
+      sugestaoValorServico: form.sugestaoValorServico ? parseFloat(unmaskCurrency(form.sugestaoValorServico)) : undefined,
       motivo: form.motivo,
       melhoria: form.melhoria || undefined,
     });
@@ -243,17 +246,16 @@ export default function SugestoesPage() {
             {step === 'tipo' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-navy-500 mb-1.5">Quem está solicitando? *</label>
-                  <select
-                    value={form.casaId}
-                    onChange={e => setForm(f => ({ ...f, casaId: parseInt(e.target.value) }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
-                  >
-                    <option value={0}>Selecione sua casa</option>
-                    {casasQuery.data?.map(c => (
-                      <option key={c.id} value={c.id}>{c.numero} - {c.nomeMorador}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-semibold text-navy-500 mb-1.5">Solicitante</label>
+                  <div className="w-full px-4 py-3 rounded-xl border border-accent-green/30 bg-accent-green/5 text-sm flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-accent-green/15 flex items-center justify-center flex-shrink-0">
+                      <span className="text-accent-green text-xs font-bold">{user?.nome?.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-navy-500">{user?.casaNumero} — {user?.nome}</p>
+                      <p className="text-gray-400 text-xs">{user?.email}</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -281,7 +283,7 @@ export default function SugestoesPage() {
 
                 <button
                   onClick={() => {
-                    if (!form.casaId || !form.tipoSugestao) { toast.error('Preencha os campos'); return; }
+                    if (!form.tipoSugestao) { toast.error('Selecione o tipo da sugestão'); return; }
                     setStep('item');
                   }}
                   className="w-full px-4 py-3 rounded-xl bg-navy-500 text-white font-semibold text-sm mt-2"
@@ -383,10 +385,10 @@ export default function SugestoesPage() {
                     <div>
                       <label className="block text-sm font-medium text-navy-500 mb-1">Valor de Produto (R$)</label>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="numeric"
                         value={form.valorProduto}
-                        onChange={e => setForm(f => ({ ...f, valorProduto: e.target.value }))}
+                        onChange={e => setForm(f => ({ ...f, valorProduto: maskCurrency(e.target.value) }))}
                         placeholder="0,00"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                       />
@@ -394,10 +396,10 @@ export default function SugestoesPage() {
                     <div>
                       <label className="block text-sm font-medium text-navy-500 mb-1">Valor de Serviço (R$)</label>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="numeric"
                         value={form.valorServico}
-                        onChange={e => setForm(f => ({ ...f, valorServico: e.target.value }))}
+                        onChange={e => setForm(f => ({ ...f, valorServico: maskCurrency(e.target.value) }))}
                         placeholder="0,00"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                       />
@@ -409,10 +411,10 @@ export default function SugestoesPage() {
                     <div>
                       <label className="block text-sm font-medium text-navy-500 mb-1">Sugestão Valor Produto (R$)</label>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="numeric"
                         value={form.sugestaoValorProduto}
-                        onChange={e => setForm(f => ({ ...f, sugestaoValorProduto: e.target.value }))}
+                        onChange={e => setForm(f => ({ ...f, sugestaoValorProduto: maskCurrency(e.target.value) }))}
                         placeholder="0,00"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                       />
@@ -420,10 +422,10 @@ export default function SugestoesPage() {
                     <div>
                       <label className="block text-sm font-medium text-navy-500 mb-1">Sugestão Valor Serviço (R$)</label>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="numeric"
                         value={form.sugestaoValorServico}
-                        onChange={e => setForm(f => ({ ...f, sugestaoValorServico: e.target.value }))}
+                        onChange={e => setForm(f => ({ ...f, sugestaoValorServico: maskCurrency(e.target.value) }))}
                         placeholder="0,00"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
                       />
