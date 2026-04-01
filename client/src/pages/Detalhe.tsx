@@ -66,10 +66,12 @@ export default function DetalhePage() {
   const currentStep = getStepIndex(sug.status);
   const totalCasas = allCasas.length;
   const votesNeeded = totalCasas - 1;
-  const votedCasaIds = votosArr.map((v: any) => v.casa_id);
-  const casasQueNaoVotaram = allCasas.filter((c: any) => c.id !== sug.casa_id && !votedCasaIds.includes(c.id));
-  const votosSimIds = votosArr.filter((v: any) => v.voto === 'sim').map((v: any) => v.casa_id);
-  const casasInteressadas = [sug.casa_id, ...votosSimIds];
+  const sugCasaId = Number(sug.casa_id);
+  const userCasaId = Number(user?.casaId);
+  const votedCasaIds = votosArr.map((v: any) => Number(v.casa_id));
+  const casasQueNaoVotaram = allCasas.filter((c: any) => Number(c.id) !== sugCasaId && !votedCasaIds.includes(Number(c.id)));
+  const votosSimIds = votosArr.filter((v: any) => v.voto === 'sim').map((v: any) => Number(v.casa_id));
+  const casasInteressadas = [sugCasaId, ...votosSimIds];
 
   const valorEstimadoProduto = parseFloat(sug.valor_produto || sug.sugestao_valor_produto || 0);
   const valorEstimadoServico = parseFloat(sug.valor_servico || sug.sugestao_valor_servico || 0);
@@ -140,7 +142,7 @@ export default function DetalhePage() {
             {sug.tipo_sugestao === 'novo' ? ' ✨ Novo' : ' 🔧 Manutenção'}
           </p>
         </div>
-        {user && sug.casa_id === user.casaId && (
+        {user && sugCasaId === userCasaId && (
           <button
             onClick={() => {
               if (confirm('Excluir esta sugestão? Todos os votos serão perdidos.')) {
@@ -298,7 +300,7 @@ export default function DetalhePage() {
           </div>
 
           {/* Vote Button */}
-          {sug.status === 'aguardando_avaliacao' && user && sug.casa_id !== user.casaId && !votedCasaIds.includes(user.casaId) && (
+          {sug.status === 'aguardando_avaliacao' && user && sugCasaId !== userCasaId && !votedCasaIds.includes(userCasaId) && (
             <button
               onClick={() => setShowVoteModal(true)}
               className="w-full mt-4 px-4 py-3 rounded-xl bg-navy-500 text-white font-semibold text-sm hover:bg-navy-600 transition-all"
@@ -306,17 +308,17 @@ export default function DetalhePage() {
               🗳️ Votar
             </button>
           )}
-          {sug.status === 'aguardando_avaliacao' && user && votedCasaIds.includes(user.casaId) && (
+          {sug.status === 'aguardando_avaliacao' && user && votedCasaIds.includes(userCasaId) && (
             <div className="mt-4 text-center text-sm text-accent-green font-semibold">✓ Você já votou</div>
           )}
-          {sug.status === 'aguardando_avaliacao' && user && sug.casa_id === user.casaId && (
+          {sug.status === 'aguardando_avaliacao' && user && sugCasaId === userCasaId && (
             <div className="mt-4 text-center text-sm text-gray-400">Você é o solicitante desta ideia</div>
           )}
         </div>
       </div>
 
       {/* Actions based on status */}
-      {sug.status === 'aprovada_parcial' && user && sug.casa_id === user.casaId && (
+      {sug.status === 'aprovada_parcial' && user && sugCasaId === userCasaId && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mt-6">
           <h3 className="font-display font-bold text-amber-800 mb-2">Aprovação Parcial</h3>
           <p className="text-sm text-amber-700 mb-4">
@@ -326,7 +328,7 @@ export default function DetalhePage() {
             <button
               onClick={() => {
                 const initial: Record<string, string> = {};
-                const interessados = allCasas.filter((c: any) => casasInteressadas.includes(c.id));
+                const interessados = allCasas.filter((c: any) => casasInteressadas.includes(Number(c.id)));
                 const valorPorCasa = valorEstimadoTotal / interessados.length;
                 interessados.forEach((c: any) => { initial[String(c.id)] = maskCurrency((valorPorCasa * 100).toFixed(0)); });
                 setDivisaoValues(initial);
@@ -384,7 +386,7 @@ export default function DetalhePage() {
               <MessageCircle size={16} />
               Enviar por WhatsApp
             </button>
-            {user && sug.casa_id === user.casaId && (
+            {user && sugCasaId === userCasaId && (
               <button
                 onClick={() => setShowConcluirModal(true)}
                 className="flex-1 px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm"
@@ -560,7 +562,7 @@ export default function DetalhePage() {
             </p>
 
             <div className="space-y-3">
-              {allCasas.filter((c: any) => casasInteressadas.includes(c.id)).map((casa: any) => (
+              {allCasas.filter((c: any) => casasInteressadas.includes(Number(c.id))).map((casa: any) => (
                 <div key={casa.id} className="flex items-center gap-3">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-navy-500">{casa.numero}</p>
@@ -586,7 +588,7 @@ export default function DetalhePage() {
                 Object.entries(divisaoValues).forEach(([k, v]) => { vals[k] = parseFloat(unmaskCurrency(v)) || 0; });
                 avancarMutation.mutate({
                   sugestaoId: sug.id,
-                  casasIds: allCasas.filter((c: any) => casasInteressadas.includes(c.id)).map((c: any) => c.id),
+                  casasIds: allCasas.filter((c: any) => casasInteressadas.includes(Number(c.id))).map((c: any) => c.id),
                   valorPorCasa: vals,
                 });
               }}

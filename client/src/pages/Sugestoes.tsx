@@ -222,7 +222,7 @@ export default function SugestoesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {user && sug.casa_id === user.casaId && (
+                {user && Number(sug.casa_id) === Number(user.casaId) && (
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); openEdit(sug); }}
