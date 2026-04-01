@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '../trpc';
 import { useAuth } from '../auth';
 import { maskCurrency, unmaskCurrency } from '../utils';
-import { Lightbulb, Plus, Tag, X, ChevronRight, DollarSign, Pencil, Trash2 } from 'lucide-react';
+import { Lightbulb, Plus, Tag, X, ChevronRight, DollarSign, Pencil, Trash2, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ITEM_TIPOS = ['Portão', 'Câmera', 'Vidro', 'Fechadura', 'Portão Pequeno', 'Muro', 'Outros'];
@@ -220,6 +220,27 @@ export default function SugestoesPage() {
                     <span>💰 R$ {(parseFloat(sug.valor_produto || sug.sugestao_valor_produto || 0) + parseFloat(sug.valor_servico || sug.sugestao_valor_servico || 0)).toFixed(2)}</span>
                   )}
                 </div>
+                {sug.status === 'aguardando_avaliacao' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const titulo = sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão';
+                      const valor = parseFloat(sug.valor_produto || sug.sugestao_valor_produto || 0) + parseFloat(sug.valor_servico || sug.sugestao_valor_servico || 0);
+                      let msg = `🏠 *Condomínio 985 - Nova Sugestão*\n\n`;
+                      msg += `📋 *${titulo}*\n`;
+                      msg += `👤 Solicitante: ${sug.nome_morador} (${sug.casa_numero})\n`;
+                      msg += `📝 ${sug.motivo}\n`;
+                      if (valor > 0) msg += `💰 Valor estimado: R$ ${valor.toFixed(2)}\n`;
+                      msg += `\n🗳️ *Votem no sistema!*\n`;
+                      msg += `${window.location.origin}/aprovacao/${sug.id}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                    }}
+                    className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500 text-white text-xs font-semibold hover:bg-green-600 transition-all w-fit"
+                  >
+                    <MessageCircle size={14} />
+                    Pedir votos no WhatsApp
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {user && Number(sug.casa_id) === Number(user.casaId) && (

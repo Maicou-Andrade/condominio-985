@@ -318,6 +318,33 @@ export default function DetalhePage() {
       </div>
 
       {/* Actions based on status */}
+      {sug.status === 'aguardando_avaliacao' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display font-bold text-blue-800 text-sm">🗳️ Aguardando Votos</h3>
+              <p className="text-xs text-blue-600 mt-0.5">{votedCasaIds.length}/{votesNeeded} votos recebidos</p>
+            </div>
+            <button
+              onClick={() => {
+                const titulo = sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão';
+                let msg = `🏠 *Condomínio 985 - Nova Sugestão*\n\n`;
+                msg += `📋 *${titulo}*\n`;
+                msg += `👤 Solicitante: ${sug.nome_morador} (${sug.casa_numero})\n`;
+                msg += `📝 ${sug.motivo}\n`;
+                if (valorEstimadoTotal > 0) msg += `💰 Valor estimado: R$ ${valorEstimadoTotal.toFixed(2)}\n`;
+                msg += `\n🗳️ *Votem no sistema!*\n`;
+                msg += `${window.location.origin}/aprovacao/${sug.id}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-all"
+            >
+              <MessageCircle size={16} />
+              Pedir votos no WhatsApp
+            </button>
+          </div>
+        </div>
+      )}
       {sug.status === 'aprovada_parcial' && user && sugCasaId === userCasaId && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mt-6">
           <h3 className="font-display font-bold text-amber-800 mb-2">Aprovação Parcial</h3>
