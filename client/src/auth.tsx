@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetch(`${getBaseUrl()}/trpc/casas.list`).then(r => r.json()),
     ]).then(([authData, casasData]) => {
       setUser(authData.user || null);
-      const casasList = casasData?.result?.data?.json || [];
+      const casasList = casasData?.result?.data || [];
       setHasCasas(casasList.length > 0);
       setLoading(false);
     }).catch(() => setLoading(false));
