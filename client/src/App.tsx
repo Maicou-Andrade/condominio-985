@@ -1,6 +1,8 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home, Lightbulb, CheckCircle, Settings } from 'lucide-react';
+import { Home, Lightbulb, CheckCircle, LogOut } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import { useAuth } from './auth';
+import LoginPage from './pages/Login';
 import CasasPage from './pages/Casas';
 import SugestoesPage from './pages/Sugestoes';
 import AprovacaoPage from './pages/Aprovacao';
@@ -14,6 +16,29 @@ const navItems = [
 
 export default function App() {
   const location = useLocation();
+  const { user, loading, logout } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy-500">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-accent-yellow mx-auto flex items-center justify-center mb-4">
+            <span className="font-display font-extrabold text-navy-500 text-2xl">985</span>
+          </div>
+          <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mt-4" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Toaster position="top-right" />
+        <LoginPage />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -56,16 +81,31 @@ export default function App() {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* User Info + Logout */}
         <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-2 px-3">
-            <div className="w-8 h-8 rounded-full bg-accent-blue/30 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">MS</span>
+          <div className="flex items-center gap-3 px-3 mb-3">
+            <div className="w-9 h-9 rounded-full bg-accent-blue/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs font-bold">
+                {user.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </span>
             </div>
-            <div>
-              <p className="text-white text-xs font-medium">MS Consultoria</p>
-              <p className="text-navy-300 text-[10px]">v1.0.0</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium truncate">{user.nome}</p>
+              <p className="text-navy-300 text-[10px] truncate">{user.casaNumero}</p>
             </div>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-navy-300 hover:text-white hover:bg-white/5 transition-all text-xs"
+          >
+            <LogOut size={14} />
+            Sair
+          </button>
+          <div className="flex items-center gap-2 px-3 mt-3 pt-3 border-t border-white/5">
+            <div className="w-5 h-5 rounded-full bg-accent-blue/20 flex items-center justify-center">
+              <span className="text-white text-[7px] font-bold">MS</span>
+            </div>
+            <span className="text-navy-400 text-[10px]">MS Consultoria v1.0</span>
           </div>
         </div>
       </aside>
