@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../trpc';
+import { useAuth } from '../auth';
 import { maskCurrency, unmaskCurrency } from '../utils';
 import {
   ArrowLeft, Lightbulb, Clock, CheckCircle, XCircle, Trophy, AlertTriangle,
@@ -26,10 +27,10 @@ function getStepIndex(status: string) {
 export default function DetalhePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [showConcluirModal, setShowConcluirModal] = useState(false);
   const [showDivisaoModal, setShowDivisaoModal] = useState(false);
-  const [voteCasaId, setVoteCasaId] = useState(0);
   const [voteValue, setVoteValue] = useState<'sim' | 'nao'>('sim');
   const [justificativa, setJustificativa] = useState('');
   const [concluirForm, setConcluirForm] = useState({ valorProduto: '', valorServico: '' });
@@ -97,7 +98,7 @@ export default function DetalhePage() {
       {/* Header */}
       <button onClick={() => navigate('/aprovacao')} className="flex items-center gap-2 text-gray-500 hover:text-navy-500 mb-6 text-sm font-medium transition-colors">
         <ArrowLeft size={18} />
-        Voltar para Aprovação
+        Voltar para Votação
       </button>
 
       <div className="flex items-start justify-between mb-8">
@@ -255,13 +256,19 @@ export default function DetalhePage() {
           </div>
 
           {/* Vote Button */}
-          {sug.status === 'aguardando_avaliacao' && casasQueNaoVotaram.length > 0 && (
+          {sug.status === 'aguardando_avaliacao' && user && sug.casa_id !== user.casaId && !votedCasaIds.includes(user.casaId) && (
             <button
               onClick={() => setShowVoteModal(true)}
               className="w-full mt-4 px-4 py-3 rounded-xl bg-navy-500 text-white font-semibold text-sm hover:bg-navy-600 transition-all"
             >
               🗳️ Votar
             </button>
+          )}
+          {sug.status === 'aguardando_avaliacao' && user && votedCasaIds.includes(user.casaId) && (
+            <div className="mt-4 text-center text-sm text-accent-green font-semibold">✓ Você já votou</div>
+          )}
+          {sug.status === 'aguardando_avaliacao' && user && sug.casa_id === user.casaId && (
+            <div className="mt-4 text-center text-sm text-gray-400">Você é o solicitante desta ideia</div>
           )}
         </div>
       </div>
@@ -375,17 +382,16 @@ export default function DetalhePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-navy-500 mb-1.5">Sua Casa *</label>
-                <select
-                  value={voteCasaId}
-                  onChange={e => setVoteCasaId(parseInt(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
-                >
-                  <option value={0}>Selecione</option>
-                  {casasQueNaoVotaram.map((c: any) => (
-                    <option key={c.id} value={c.id}>{c.numero} - {c.nome_morador}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-semibold text-navy-500 mb-1.5">Votante</label>
+                <div className="w-full px-4 py-3 rounded-xl border border-accent-blue/30 bg-accent-blue/5 text-sm flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent-blue/15 flex items-center justify-center flex-shrink-0">
+                    <span className="text-accent-blue text-xs font-bold">{user?.nome?.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-navy-500">{user?.casaNumero} — {user?.nome}</p>
+                    <p className="text-gray-400 text-xs">{user?.email}</p>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -428,10 +434,10 @@ export default function DetalhePage() {
 
             <button
               onClick={() => {
-                if (!voteCasaId) { toast.error('Selecione sua casa'); return; }
+                if (!user?.casaId) return;
                 votarMutation.mutate({
                   sugestaoId: sug.id,
-                  casaId: voteCasaId,
+                  casaId: user.casaId,
                   voto: voteValue,
                   justificativa: voteValue === 'nao' ? justificativa : undefined,
                 });

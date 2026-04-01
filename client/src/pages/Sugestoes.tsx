@@ -64,6 +64,7 @@ export default function SugestoesPage() {
   }
 
   function handleSubmit() {
+    if (createMutation.isPending) return;
     if (!form.casaId || !form.motivo) {
       toast.error('Preencha os campos obrigatórios');
       return;

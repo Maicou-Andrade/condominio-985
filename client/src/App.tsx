@@ -11,7 +11,7 @@ import DetalhePage from './pages/Detalhe';
 const navItems = [
   { path: '/', label: 'Casas', icon: Home },
   { path: '/sugestoes', label: 'Sugestões', icon: Lightbulb },
-  { path: '/aprovacao', label: 'Aprovação', icon: CheckCircle },
+  { path: '/aprovacao', label: 'Votação das Ideias', icon: CheckCircle },
 ];
 
 export default function App() {
