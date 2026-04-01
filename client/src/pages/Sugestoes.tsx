@@ -396,17 +396,22 @@ export default function SugestoesPage() {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-sm font-semibold text-navy-500 mb-1.5">Categoria da Manutenção *</label>
-                    <select
-                      value={form.categoriaId}
-                      onChange={e => setForm(f => ({ ...f, categoriaId: parseInt(e.target.value) }))}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
-                    >
-                      <option value={0}>Selecione a categoria</option>
+                    <label className="block text-sm font-semibold text-navy-500 mb-2">Categoria da Manutenção *</label>
+                    <div className="grid grid-cols-2 gap-2">
                       {categoriasQuery.data?.map(c => (
-                        <option key={c.id} value={c.id}>{c.nome} ({c.tipo})</option>
+                        <button
+                          key={c.id}
+                          onClick={() => setForm(f => ({ ...f, categoriaId: c.id }))}
+                          className={`p-3 rounded-xl border-2 text-sm font-medium transition-all text-left ${
+                            form.categoriaId === c.id
+                              ? 'border-navy-500 bg-navy-500/5 text-navy-500'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          🔧 {c.nome}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
                 )}
 
