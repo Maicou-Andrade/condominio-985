@@ -10,7 +10,7 @@ const publicProcedure = t.procedure;
 
 export const appRouter = t.router({
   // ========== CASAS ==========
-  casas: {
+  casas: t.router({
     list: publicProcedure.query(async () => {
       const db = getDb();
       return db.select().from(casas).orderBy(casas.numero);
@@ -48,10 +48,10 @@ export const appRouter = t.router({
         await db.delete(casas).where(eq(casas.id, input.id));
         return { success: true };
       }),
-  },
+  }),
 
   // ========== CATEGORIAS ==========
-  categorias: {
+  categorias: t.router({
     list: publicProcedure.query(async () => {
       const db = getDb();
       return db.select().from(categorias).orderBy(categorias.nome);
@@ -67,10 +67,10 @@ export const appRouter = t.router({
         });
         return { success: true };
       }),
-  },
+  }),
 
   // ========== SUGESTÕES ==========
-  sugestoes: {
+  sugestoes: t.router({
     list: publicProcedure.query(async () => {
       const db = getDb();
       const pool = getPool();
@@ -323,7 +323,7 @@ export const appRouter = t.router({
 
         return { success: true };
       }),
-  },
+  }),
 });
 
 export type AppRouter = typeof appRouter;
