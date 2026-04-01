@@ -71,30 +71,55 @@ export default function DetalhePage() {
   const votosSimIds = votosArr.filter((v: any) => v.voto === 'sim').map((v: any) => v.casa_id);
   const casasInteressadas = [sug.casa_id, ...votosSimIds];
 
-  const valorEstimado = parseFloat(sug.valor_produto || sug.sugestao_valor_produto || 0) + parseFloat(sug.valor_servico || sug.sugestao_valor_servico || 0);
+  const valorEstimadoProduto = parseFloat(sug.valor_produto || sug.sugestao_valor_produto || 0);
+  const valorEstimadoServico = parseFloat(sug.valor_servico || sug.sugestao_valor_servico || 0);
+  const valorEstimadoTotal = valorEstimadoProduto + valorEstimadoServico;
 
-  function gerarWhatsApp() {
-    const valorTotalReal = parseFloat(sug.valor_total_gasto_produto || 0) + parseFloat(sug.valor_total_gasto_servico || 0);
-    let msg = `🏠 *Condomínio 985 - Projeto Concluído*\n\n`;
-    msg += `📋 *${sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão #' + sug.id}*\n`;
+  function gerarWhatsAppAprovado() {
+    const titulo = sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão #' + sug.id;
+    let msg = `🏠 *Condomínio 985 - Ideia Aprovada*\n\n`;
+    msg += `📋 *${titulo}*\n`;
     msg += `📝 ${sug.motivo}\n\n`;
-    msg += `💰 *Valores Reais:*\n`;
-    msg += `  Produtos: R$ ${parseFloat(sug.valor_total_gasto_produto || 0).toFixed(2)}\n`;
-    msg += `  Serviço: R$ ${parseFloat(sug.valor_total_gasto_servico || 0).toFixed(2)}\n`;
-    msg += `  *Total: R$ ${valorTotalReal.toFixed(2)}*\n\n`;
-
+    msg += `💰 *Valores Estimados:*\n`;
+    msg += `  Produtos: R$ ${valorEstimadoProduto.toFixed(2)}\n`;
+    msg += `  Serviço: R$ ${valorEstimadoServico.toFixed(2)}\n`;
+    msg += `  *Total: R$ ${valorEstimadoTotal.toFixed(2)}*\n\n`;
     if (divisoesArr.length > 0) {
-      msg += `📊 *Divisão por Casa:*\n`;
+      msg += `📊 *Divisão Estimada por Casa:*\n`;
       divisoesArr.forEach((d: any) => {
-        const diff = parseFloat(d.percentual_diferenca || 0);
+        msg += `  ${d.casa_numero} (${d.nome_morador}): R$ ${parseFloat(d.valor_pagar).toFixed(2)}\n`;
+      });
+    }
+    msg += `\n✅ *Status:* Aprovada por todos`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  function gerarWhatsAppConcluido() {
+    const titulo = sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão #' + sug.id;
+    const valorRealProduto = parseFloat(sug.valor_total_gasto_produto || 0);
+    const valorRealServico = parseFloat(sug.valor_total_gasto_servico || 0);
+    const valorRealTotal = valorRealProduto + valorRealServico;
+    const diffTotal = valorEstimadoTotal > 0 ? ((valorRealTotal - valorEstimadoTotal) / valorEstimadoTotal) * 100 : 0;
+
+    let msg = `🏠 *Condomínio 985 - Projeto Concluído*\n\n`;
+    msg += `📋 *${titulo}*\n`;
+    msg += `📝 ${sug.motivo}\n\n`;
+    msg += `💰 *Estimado vs Real:*\n`;
+    msg += `  Produto: R$ ${valorEstimadoProduto.toFixed(2)} → R$ ${valorRealProduto.toFixed(2)}\n`;
+    msg += `  Serviço: R$ ${valorEstimadoServico.toFixed(2)} → R$ ${valorRealServico.toFixed(2)}\n`;
+    msg += `  *Total: R$ ${valorEstimadoTotal.toFixed(2)} → R$ ${valorRealTotal.toFixed(2)}*`;
+    if (diffTotal !== 0) msg += ` (${diffTotal > 0 ? '+' : ''}${diffTotal.toFixed(1)}%)`;
+    msg += `\n\n`;
+    if (divisoesArr.length > 0) {
+      msg += `📊 *Divisão Final por Casa:*\n`;
+      divisoesArr.forEach((d: any) => {
         msg += `  ${d.casa_numero} (${d.nome_morador}): R$ ${parseFloat(d.valor_pagar).toFixed(2)}`;
-        if (diff !== 0) msg += ` (${diff > 0 ? '+' : ''}${diff.toFixed(1)}% vs estimado)`;
+        const diff = parseFloat(d.percentual_diferenca || 0);
+        if (diff !== 0) msg += ` (${diff > 0 ? '+' : ''}${diff.toFixed(1)}%)`;
         msg += `\n`;
       });
     }
-
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   return (
@@ -302,7 +327,7 @@ export default function DetalhePage() {
               onClick={() => {
                 const initial: Record<string, string> = {};
                 const interessados = allCasas.filter((c: any) => casasInteressadas.includes(c.id));
-                const valorPorCasa = valorEstimado / interessados.length;
+                const valorPorCasa = valorEstimadoTotal / interessados.length;
                 interessados.forEach((c: any) => { initial[String(c.id)] = maskCurrency((valorPorCasa * 100).toFixed(0)); });
                 setDivisaoValues(initial);
                 setShowDivisaoModal(true);
@@ -326,8 +351,22 @@ export default function DetalhePage() {
           <h3 className="font-display font-bold text-green-800 mb-2">
             {sug.status === 'aprovada_total' ? '✅ Aprovada por Todos' : '✅ Divisão Definida'}
           </h3>
+
+          {/* Valores Estimados */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-white/60 rounded-xl p-3">
+              <p className="text-[10px] text-green-600 font-semibold uppercase">Valor Estimado Produto</p>
+              <p className="text-lg font-bold text-green-800">R$ {valorEstimadoProduto.toFixed(2)}</p>
+            </div>
+            <div className="bg-white/60 rounded-xl p-3">
+              <p className="text-[10px] text-green-600 font-semibold uppercase">Valor Estimado Serviço</p>
+              <p className="text-lg font-bold text-green-800">R$ {valorEstimadoServico.toFixed(2)}</p>
+            </div>
+          </div>
+
           {divisoesArr.length > 0 && (
             <div className="mb-4 space-y-1.5">
+              <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Divisão Estimada</p>
               {divisoesArr.map((d: any) => (
                 <div key={d.id} className="flex items-center justify-between bg-white/60 rounded-lg px-3 py-2">
                   <span className="text-sm text-green-800 font-medium">{d.casa_numero} - {d.nome_morador}</span>
@@ -336,30 +375,67 @@ export default function DetalhePage() {
               ))}
             </div>
           )}
-          {user && sug.casa_id === user.casaId && (
+
+          <div className="flex gap-3">
             <button
-              onClick={() => setShowConcluirModal(true)}
-              className="w-full px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm"
+              onClick={gerarWhatsAppAprovado}
+              className="flex-1 px-4 py-3 rounded-xl bg-green-500 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all"
             >
-              🏁 Concluir Projeto
+              <MessageCircle size={16} />
+              Enviar por WhatsApp
             </button>
-          )}
+            {user && sug.casa_id === user.casaId && (
+              <button
+                onClick={() => setShowConcluirModal(true)}
+                className="flex-1 px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm"
+              >
+                🏁 Concluir Projeto
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {sug.status === 'concluida' && (
         <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 mt-6">
-          <h3 className="font-display font-bold text-purple-800 mb-3">🏆 Projeto Concluído</h3>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <h3 className="font-display font-bold text-purple-800 mb-4">🏆 Projeto Concluído</h3>
+
+          {/* Comparação Estimado vs Real */}
+          <div className="grid grid-cols-2 gap-3 mb-2">
             <div className="bg-white/60 rounded-xl p-3">
-              <p className="text-[10px] text-purple-500 font-semibold uppercase">Valor Real Produto</p>
-              <p className="text-xl font-bold text-purple-800">R$ {parseFloat(sug.valor_total_gasto_produto || 0).toFixed(2)}</p>
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Estimado Produto</p>
+              <p className="text-base font-bold text-gray-500">R$ {valorEstimadoProduto.toFixed(2)}</p>
             </div>
             <div className="bg-white/60 rounded-xl p-3">
-              <p className="text-[10px] text-purple-500 font-semibold uppercase">Valor Real Serviço</p>
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Estimado Serviço</p>
+              <p className="text-base font-bold text-gray-500">R$ {valorEstimadoServico.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div className="bg-white/60 rounded-xl p-3 border-2 border-purple-200">
+              <p className="text-[10px] text-purple-500 font-semibold uppercase">Real Produto</p>
+              <p className="text-xl font-bold text-purple-800">R$ {parseFloat(sug.valor_total_gasto_produto || 0).toFixed(2)}</p>
+            </div>
+            <div className="bg-white/60 rounded-xl p-3 border-2 border-purple-200">
+              <p className="text-[10px] text-purple-500 font-semibold uppercase">Real Serviço</p>
               <p className="text-xl font-bold text-purple-800">R$ {parseFloat(sug.valor_total_gasto_servico || 0).toFixed(2)}</p>
             </div>
           </div>
+          {(() => {
+            const realTotal = parseFloat(sug.valor_total_gasto_produto || 0) + parseFloat(sug.valor_total_gasto_servico || 0);
+            const diff = valorEstimadoTotal > 0 ? ((realTotal - valorEstimadoTotal) / valorEstimadoTotal) * 100 : 0;
+            return (
+              <div className="bg-white/60 rounded-xl p-3 mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-purple-500 font-semibold uppercase">Diferença Total</p>
+                  <p className="text-sm text-gray-500">Estimado R$ {valorEstimadoTotal.toFixed(2)} → Real R$ {realTotal.toFixed(2)}</p>
+                </div>
+                <span className={`text-lg font-extrabold ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                  {diff > 0 ? '+' : ''}{diff.toFixed(1)}%
+                </span>
+              </div>
+            );
+          })()}
 
           {divisoesArr.length > 0 && (
             <div className="space-y-1.5 mb-4">
@@ -381,7 +457,7 @@ export default function DetalhePage() {
           )}
 
           <button
-            onClick={gerarWhatsApp}
+            onClick={gerarWhatsAppConcluido}
             className="w-full px-4 py-3 rounded-xl bg-green-500 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all"
           >
             <MessageCircle size={18} />
@@ -480,7 +556,7 @@ export default function DetalhePage() {
             </div>
 
             <p className="text-sm text-gray-500 mb-4">
-              Valor total estimado: <strong className="text-navy-500">R$ {valorEstimado.toFixed(2)}</strong>
+              Valor total estimado: <strong className="text-navy-500">R$ {valorEstimadoTotal.toFixed(2)}</strong>
             </p>
 
             <div className="space-y-3">
