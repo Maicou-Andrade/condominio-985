@@ -222,7 +222,7 @@ export default function SugestoesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {user && sug.casa_id === user.casaId && ['aguardando_avaliacao', 'gerada'].includes(sug.status) && (
+                {user && sug.casa_id === user.casaId && (
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); openEdit(sug); }}

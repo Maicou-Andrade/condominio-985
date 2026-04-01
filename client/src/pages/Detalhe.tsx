@@ -140,7 +140,7 @@ export default function DetalhePage() {
             {sug.tipo_sugestao === 'novo' ? ' ✨ Novo' : ' 🔧 Manutenção'}
           </p>
         </div>
-        {user && sug.casa_id === user.casaId && ['aguardando_avaliacao', 'gerada'].includes(sug.status) && (
+        {user && sug.casa_id === user.casaId && (
           <button
             onClick={() => {
               if (confirm('Excluir esta sugestão? Todos os votos serão perdidos.')) {

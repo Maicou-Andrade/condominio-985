@@ -244,7 +244,6 @@ export const appRouter = t.router({
         const [rows] = await pool.query('SELECT casa_id, status FROM sugestoes WHERE id = ?', [input.id]) as any;
         if (rows.length === 0) throw new Error('Sugestão não encontrada');
         if (rows[0].casa_id !== input.casaId) throw new Error('Apenas o solicitante pode editar');
-        if (!['aguardando_avaliacao', 'gerada'].includes(rows[0].status)) throw new Error('Sugestão não pode mais ser editada');
 
         await pool.query(`
           UPDATE sugestoes SET tipo_sugestao = ?, categoria_id = ?, item_tipo = ?, item_outros = ?,
