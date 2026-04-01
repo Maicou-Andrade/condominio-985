@@ -16,7 +16,7 @@ const navItems = [
 
 export default function App() {
   const location = useLocation();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, hasCasas } = useAuth();
 
   if (loading) {
     return (
@@ -26,6 +26,24 @@ export default function App() {
             <span className="font-display font-extrabold text-navy-500 text-2xl">985</span>
           </div>
           <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mt-4" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && !hasCasas) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Toaster position="top-right" />
+        <div className="max-w-3xl mx-auto py-12 px-6">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-accent-yellow mx-auto flex items-center justify-center mb-4">
+              <span className="font-display font-extrabold text-navy-500 text-2xl">985</span>
+            </div>
+            <h1 className="font-display font-extrabold text-2xl text-navy-500">Configuração Inicial</h1>
+            <p className="text-gray-500 mt-1 text-sm">Cadastre a primeira casa para ativar o sistema</p>
+          </div>
+          <CasasPage />
         </div>
       </div>
     );

@@ -10,6 +10,7 @@ export interface AuthUser {
 interface AuthCtx {
   user: AuthUser | null;
   loading: boolean;
+  hasCasas: boolean;
   login: (credential: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   logout: () => Promise<void>;
 }
@@ -17,6 +18,7 @@ interface AuthCtx {
 const AuthContext = createContext<AuthCtx>({
   user: null,
   loading: true,
+  hasCasas: true,
   login: async () => ({ success: false }),
   logout: async () => {},
 });
@@ -29,12 +31,18 @@ const getBaseUrl = () => {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasCasas, setHasCasas] = useState(true);
 
   useEffect(() => {
-    fetch(`${getBaseUrl()}/api/auth/me`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => { setUser(data.user || null); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch(`${getBaseUrl()}/api/auth/me`, { credentials: 'include' }).then(r => r.json()),
+      fetch(`${getBaseUrl()}/trpc/casas.list`).then(r => r.json()),
+    ]).then(([authData, casasData]) => {
+      setUser(authData.user || null);
+      const casasList = casasData?.result?.data?.json || [];
+      setHasCasas(casasList.length > 0);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const login = async (credential: string) => {
@@ -62,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, hasCasas, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
