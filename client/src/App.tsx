@@ -236,7 +236,7 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
+      <main className="flex-1 lg:ml-64 bg-navy-500 lg:bg-gray-50 min-h-screen">
         {isImpersonating && (
           <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
             <p className="text-navy-500 text-xs font-semibold">
@@ -261,7 +261,7 @@ export default function App() {
             </button>
           </div>
         )}
-        <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+        <div className="bg-gray-50 lg:bg-transparent min-h-screen lg:min-h-0 rounded-t-3xl lg:rounded-none p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto pb-24 lg:pb-8">
           <Routes>
             <Route path="/" element={<CasasPage />} />
             <Route path="/sugestoes" element={<SugestoesPage />} />
@@ -272,7 +272,7 @@ export default function App() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-navy-500 border-t border-white/10 z-50 safe-bottom">
         <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -282,7 +282,7 @@ export default function App() {
                 key={item.path}
                 to={item.path}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${
-                  isActive ? 'text-navy-500' : 'text-gray-400'
+                  isActive ? 'text-accent-yellow' : 'text-navy-200'
                 }`}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
