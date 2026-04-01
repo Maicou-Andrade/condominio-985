@@ -112,6 +112,17 @@ export async function runMigrations() {
     try { await conn.query('ALTER TABLE casas ADD COLUMN senha VARCHAR(255)'); } catch {}
     try { await conn.query('ALTER TABLE casas ADD COLUMN deve_trocar_senha BOOLEAN DEFAULT TRUE'); } catch {}
 
+    // Set default password "985" for existing non-Gmail users without password
+    try {
+      const bcrypt = await import('bcryptjs');
+      const [nonGmail] = await conn.query("SELECT id FROM casas WHERE email NOT LIKE '%@gmail.com' AND senha IS NULL") as any;
+      if (nonGmail.length > 0) {
+        const hash = await bcrypt.hash('985', 10);
+        await conn.query("UPDATE casas SET senha = ?, deve_trocar_senha = TRUE WHERE email NOT LIKE '%@gmail.com' AND senha IS NULL", [hash]);
+        console.log(`🔑 Set default password for ${nonGmail.length} non-Gmail user(s)`);
+      }
+    } catch (e) { console.error('Password migration error:', e); }
+
     console.log('✅ Migrations executed successfully');
   } catch (err) {
     console.error('Migration error:', err);
