@@ -47,6 +47,33 @@ export const appRouter = t.router({
         await db.delete(casas).where(eq(casas.id, input.id));
         return { success: true };
       }),
+
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        numero: z.string(),
+        nomeMorador: z.string().min(1),
+        email: z.string().email(),
+        telefone: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = getDb();
+        const pool = getPool();
+        // Check unique numero (exclude self)
+        const [existing] = await pool.query(
+          'SELECT id FROM casas WHERE numero = ? AND id != ?',
+          [input.numero, input.id]
+        ) as any;
+        if (existing.length > 0) throw new Error(`${input.numero} já está cadastrada`);
+
+        await db.update(casas).set({
+          numero: input.numero,
+          nomeMorador: input.nomeMorador,
+          email: input.email,
+          telefone: input.telefone || null,
+        }).where(eq(casas.id, input.id));
+        return { success: true };
+      }),
   }),
 
   // ========== CATEGORIAS ==========

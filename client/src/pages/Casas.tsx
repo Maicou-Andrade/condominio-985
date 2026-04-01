@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { trpc } from '../trpc';
-import { Home, Plus, Trash2, User, Mail, Phone, X } from 'lucide-react';
+import { Home, Plus, Trash2, User, Mail, Phone, X, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CASAS_OPTIONS = ['Casa 01', 'Casa 02', 'Casa 03', 'Casa 04', 'Casa 05'];
 
 export default function CasasPage() {
   const [showModal, setShowModal] = useState(false);
+  const [editingCasa, setEditingCasa] = useState<any>(null);
   const [form, setForm] = useState({ numero: '', nomeMorador: '', email: '', telefone: '' });
 
   const casasQuery = trpc.casas.list.useQuery();
   const createMutation = trpc.casas.create.useMutation({
     onSuccess: () => {
       toast.success('Casa cadastrada com sucesso!');
-      setShowModal(false);
-      setForm({ numero: '', nomeMorador: '', email: '', telefone: '' });
+      closeModal();
+      casasQuery.refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const updateMutation = trpc.casas.update.useMutation({
+    onSuccess: () => {
+      toast.success('Casa atualizada com sucesso!');
+      closeModal();
       casasQuery.refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -29,6 +37,48 @@ export default function CasasPage() {
   const casasCadastradas = casasQuery.data?.map(c => c.numero) || [];
   const casasDisponiveis = CASAS_OPTIONS.filter(c => !casasCadastradas.includes(c));
 
+  function openCreate(preselect?: string) {
+    setEditingCasa(null);
+    setForm({ numero: preselect || '', nomeMorador: '', email: '', telefone: '' });
+    setShowModal(true);
+  }
+
+  function openEdit(casa: any) {
+    setEditingCasa(casa);
+    setForm({
+      numero: casa.numero,
+      nomeMorador: casa.nomeMorador,
+      email: casa.email,
+      telefone: casa.telefone || '',
+    });
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setEditingCasa(null);
+    setForm({ numero: '', nomeMorador: '', email: '', telefone: '' });
+  }
+
+  function handleSave() {
+    if (!form.numero || !form.nomeMorador || !form.email) {
+      toast.error('Preencha os campos obrigatórios');
+      return;
+    }
+    if (editingCasa) {
+      updateMutation.mutate({ id: editingCasa.id, ...form });
+    } else {
+      createMutation.mutate(form);
+    }
+  }
+
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+
+  // For edit: available options = not taken + current one
+  const selectOptions = editingCasa
+    ? CASAS_OPTIONS.filter(c => !casasCadastradas.includes(c) || c === editingCasa.numero)
+    : casasDisponiveis;
+
   return (
     <div className="animate-slide-up">
       {/* Header */}
@@ -39,7 +89,7 @@ export default function CasasPage() {
         </div>
         {casasDisponiveis.length > 0 && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => openCreate()}
             className="flex items-center gap-2 bg-navy-500 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-navy-600 transition-all shadow-lg shadow-navy-500/25 active:scale-95"
           >
             <Plus size={18} />
@@ -70,14 +120,24 @@ export default function CasasPage() {
                   <Home size={22} className={isRegistered ? 'text-accent-green' : 'text-gray-400'} />
                 </div>
                 {isRegistered && (
-                  <button
-                    onClick={() => {
-                      if (confirm('Remover esta casa?')) deleteMutation.mutate({ id: casa.id });
-                    }}
-                    className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEdit(casa)}
+                      className="p-2 rounded-lg text-gray-400 hover:text-accent-blue hover:bg-blue-50 transition-all"
+                      title="Editar"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Remover esta casa?')) deleteMutation.mutate({ id: casa.id });
+                      }}
+                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                      title="Remover"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -109,7 +169,7 @@ export default function CasasPage() {
                 <div className="mt-3">
                   <p className="text-gray-400 text-sm">Disponível para cadastro</p>
                   <button
-                    onClick={() => { setForm(f => ({ ...f, numero })); setShowModal(true); }}
+                    onClick={() => openCreate(numero)}
                     className="mt-3 text-accent-blue text-sm font-semibold hover:underline"
                   >
                     + Cadastrar morador
@@ -134,13 +194,15 @@ export default function CasasPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Create/Edit */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={closeModal}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display font-bold text-xl text-navy-500">Cadastrar Casa</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-gray-100">
+              <h2 className="font-display font-bold text-xl text-navy-500">
+                {editingCasa ? 'Editar Casa' : 'Cadastrar Casa'}
+              </h2>
+              <button onClick={closeModal} className="p-2 rounded-lg hover:bg-gray-100">
                 <X size={18} />
               </button>
             </div>
@@ -154,7 +216,7 @@ export default function CasasPage() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue text-sm"
                 >
                   <option value="">Selecione a casa</option>
-                  {casasDisponiveis.map(c => (
+                  {selectOptions.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -196,23 +258,17 @@ export default function CasasPage() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-all"
               >
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  if (!form.numero || !form.nomeMorador || !form.email) {
-                    toast.error('Preencha os campos obrigatórios');
-                    return;
-                  }
-                  createMutation.mutate(form);
-                }}
-                disabled={createMutation.isPending}
+                onClick={handleSave}
+                disabled={isLoading}
                 className="flex-1 px-4 py-3 rounded-xl bg-navy-500 text-white font-semibold text-sm hover:bg-navy-600 transition-all disabled:opacity-50"
               >
-                {createMutation.isPending ? 'Salvando...' : 'Cadastrar'}
+                {isLoading ? 'Salvando...' : editingCasa ? 'Salvar Alterações' : 'Cadastrar'}
               </button>
             </div>
           </div>
