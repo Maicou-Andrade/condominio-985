@@ -222,6 +222,58 @@ export const appRouter = t.router({
         return { success: true, id: (result as any).insertId };
       }),
 
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        casaId: z.number(),
+        tipoSugestao: z.string(),
+        categoriaId: z.number().optional(),
+        itemTipo: z.string().optional(),
+        itemOutros: z.string().optional(),
+        temValor: z.boolean(),
+        valorProduto: z.number().optional(),
+        valorServico: z.number().optional(),
+        sugestaoValorProduto: z.number().optional(),
+        sugestaoValorServico: z.number().optional(),
+        motivo: z.string().min(1),
+        melhoria: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const pool = getPool();
+        // Verify ownership
+        const [rows] = await pool.query('SELECT casa_id, status FROM sugestoes WHERE id = ?', [input.id]) as any;
+        if (rows.length === 0) throw new Error('Sugestão não encontrada');
+        if (rows[0].casa_id !== input.casaId) throw new Error('Apenas o solicitante pode editar');
+        if (!['aguardando_avaliacao', 'gerada'].includes(rows[0].status)) throw new Error('Sugestão não pode mais ser editada');
+
+        await pool.query(`
+          UPDATE sugestoes SET tipo_sugestao = ?, categoria_id = ?, item_tipo = ?, item_outros = ?,
+            tem_valor = ?, valor_produto = ?, valor_servico = ?, sugestao_valor_produto = ?, sugestao_valor_servico = ?,
+            motivo = ?, melhoria = ?
+          WHERE id = ?
+        `, [
+          input.tipoSugestao, input.categoriaId || null, input.itemTipo || null, input.itemOutros || null,
+          input.temValor, input.valorProduto || null, input.valorServico || null,
+          input.sugestaoValorProduto || null, input.sugestaoValorServico || null,
+          input.motivo, input.melhoria || null, input.id,
+        ]);
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number(), casaId: z.number() }))
+      .mutation(async ({ input }) => {
+        const pool = getPool();
+        const [rows] = await pool.query('SELECT casa_id FROM sugestoes WHERE id = ?', [input.id]) as any;
+        if (rows.length === 0) throw new Error('Sugestão não encontrada');
+        if (rows[0].casa_id !== input.casaId) throw new Error('Apenas o solicitante pode excluir');
+
+        await pool.query('DELETE FROM divisoes WHERE sugestao_id = ?', [input.id]);
+        await pool.query('DELETE FROM votos WHERE sugestao_id = ?', [input.id]);
+        await pool.query('DELETE FROM sugestoes WHERE id = ?', [input.id]);
+        return { success: true };
+      }),
+
     votar: publicProcedure
       .input(z.object({
         sugestaoId: z.number(),

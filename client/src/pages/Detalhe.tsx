@@ -5,7 +5,7 @@ import { useAuth } from '../auth';
 import { maskCurrency, unmaskCurrency } from '../utils';
 import {
   ArrowLeft, Lightbulb, Clock, CheckCircle, XCircle, Trophy, AlertTriangle,
-  ThumbsUp, ThumbsDown, DollarSign, MessageCircle, Share2, X
+  ThumbsUp, ThumbsDown, DollarSign, MessageCircle, Share2, X, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,6 +49,10 @@ export default function DetalhePage() {
   });
   const concluirMutation = trpc.sugestoes.concluir.useMutation({
     onSuccess: () => { toast.success('Projeto concluído!'); setShowConcluirModal(false); detailQuery.refetch(); },
+  });
+  const deleteMutation = trpc.sugestoes.delete.useMutation({
+    onSuccess: () => { toast.success('Sugestão excluída'); navigate('/sugestoes'); },
+    onError: (err: any) => toast.error(err.message),
   });
 
   if (!detailQuery.data) {
@@ -111,6 +115,19 @@ export default function DetalhePage() {
             {sug.tipo_sugestao === 'novo' ? ' ✨ Novo' : ' 🔧 Manutenção'}
           </p>
         </div>
+        {user && sug.casa_id === user.casaId && ['aguardando_avaliacao', 'gerada'].includes(sug.status) && (
+          <button
+            onClick={() => {
+              if (confirm('Excluir esta sugestão? Todos os votos serão perdidos.')) {
+                deleteMutation.mutate({ id: sug.id, casaId: user.casaId });
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-all"
+          >
+            <Trash2 size={16} />
+            Excluir
+          </button>
+        )}
       </div>
 
       {/* Status Timeline - iFood style */}

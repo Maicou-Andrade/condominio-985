@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '../trpc';
 import { useAuth } from '../auth';
 import { maskCurrency, unmaskCurrency } from '../utils';
-import { Lightbulb, Plus, Tag, X, ChevronRight, DollarSign } from 'lucide-react';
+import { Lightbulb, Plus, Tag, X, ChevronRight, DollarSign, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ITEM_TIPOS = ['Portão', 'Câmera', 'Vidro', 'Fechadura', 'Portão Pequeno', 'Muro', 'Outros'];
@@ -15,6 +15,7 @@ export default function SugestoesPage() {
   const [showCatModal, setShowCatModal] = useState(false);
   const [catNome, setCatNome] = useState('');
   const [step, setStep] = useState<FormStep>('tipo');
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     casaId: user?.casaId || 0,
     tipoSugestao: '',
@@ -43,6 +44,23 @@ export default function SugestoesPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const updateMutation = trpc.sugestoes.update.useMutation({
+    onSuccess: () => {
+      toast.success('Sugestão atualizada!');
+      resetForm();
+      sugestoesQuery.refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteMutation = trpc.sugestoes.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Sugestão excluída');
+      sugestoesQuery.refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const createCatMutation = trpc.categorias.create.useMutation({
     onSuccess: () => {
       toast.success('Categoria adicionada!');
@@ -56,6 +74,7 @@ export default function SugestoesPage() {
   function resetForm() {
     setShowModal(false);
     setStep('tipo');
+    setEditingId(null);
     setForm({
       casaId: user?.casaId || 0, tipoSugestao: '', categoriaId: 0, itemTipo: '', itemOutros: '',
       temValor: false, valorProduto: '', valorServico: '',
@@ -63,13 +82,33 @@ export default function SugestoesPage() {
     });
   }
 
+  function openEdit(sug: any) {
+    setEditingId(sug.id);
+    setForm({
+      casaId: user?.casaId || 0,
+      tipoSugestao: sug.tipo_sugestao,
+      categoriaId: sug.categoria_id || 0,
+      itemTipo: sug.item_tipo || '',
+      itemOutros: sug.item_outros || '',
+      temValor: !!sug.tem_valor,
+      valorProduto: sug.valor_produto ? maskCurrency((parseFloat(sug.valor_produto) * 100).toFixed(0)) : '',
+      valorServico: sug.valor_servico ? maskCurrency((parseFloat(sug.valor_servico) * 100).toFixed(0)) : '',
+      sugestaoValorProduto: sug.sugestao_valor_produto ? maskCurrency((parseFloat(sug.sugestao_valor_produto) * 100).toFixed(0)) : '',
+      sugestaoValorServico: sug.sugestao_valor_servico ? maskCurrency((parseFloat(sug.sugestao_valor_servico) * 100).toFixed(0)) : '',
+      motivo: sug.motivo || '',
+      melhoria: sug.melhoria || '',
+    });
+    setStep('tipo');
+    setShowModal(true);
+  }
+
   function handleSubmit() {
-    if (createMutation.isPending) return;
+    if (createMutation.isPending || updateMutation.isPending) return;
     if (!form.casaId || !form.motivo) {
       toast.error('Preencha os campos obrigatórios');
       return;
     }
-    createMutation.mutate({
+    const payload = {
       casaId: form.casaId,
       tipoSugestao: form.tipoSugestao,
       categoriaId: form.categoriaId || undefined,
@@ -82,7 +121,12 @@ export default function SugestoesPage() {
       sugestaoValorServico: form.sugestaoValorServico ? parseFloat(unmaskCurrency(form.sugestaoValorServico)) : undefined,
       motivo: form.motivo,
       melhoria: form.melhoria || undefined,
-    });
+    };
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, ...payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   }
 
   const statusColors: Record<string, string> = {
@@ -177,12 +221,37 @@ export default function SugestoesPage() {
                   )}
                 </div>
               </div>
-              <a
-                href={`/aprovacao/${sug.id}`}
-                className="p-3 rounded-xl text-gray-300 hover:text-navy-500 hover:bg-navy-500/5 transition-all"
-              >
-                <ChevronRight size={20} />
-              </a>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {user && sug.casa_id === user.casaId && ['aguardando_avaliacao', 'gerada'].includes(sug.status) && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEdit(sug); }}
+                      className="p-2 rounded-lg text-gray-300 hover:text-accent-blue hover:bg-blue-50 transition-all"
+                      title="Editar"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('Excluir esta sugestão? Esta ação não pode ser desfeita.')) {
+                          deleteMutation.mutate({ id: sug.id, casaId: user.casaId });
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+                <a
+                  href={`/aprovacao/${sug.id}`}
+                  className="p-2 rounded-lg text-gray-300 hover:text-navy-500 hover:bg-navy-500/5 transition-all"
+                >
+                  <ChevronRight size={20} />
+                </a>
+              </div>
             </div>
           </div>
         ))}
@@ -226,7 +295,7 @@ export default function SugestoesPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 animate-slide-up my-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="font-display font-bold text-xl text-navy-500">Nova Sugestão</h2>
+                <h2 className="font-display font-bold text-xl text-navy-500">{editingId ? 'Editar Sugestão' : 'Nova Sugestão'}</h2>
                 <p className="text-gray-400 text-xs mt-0.5">
                   Passo {step === 'tipo' ? '1' : step === 'item' ? '2' : step === 'valor' ? '3' : '4'} de 4
                 </p>
@@ -475,10 +544,10 @@ export default function SugestoesPage() {
                   <button onClick={() => setStep('valor')} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">← Voltar</button>
                   <button
                     onClick={handleSubmit}
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                     className="flex-1 px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm disabled:opacity-50"
                   >
-                    {createMutation.isPending ? 'Enviando...' : '✓ Criar Sugestão'}
+                    {(createMutation.isPending || updateMutation.isPending) ? 'Salvando...' : editingId ? '✓ Salvar Alterações' : '✓ Criar Sugestão'}
                   </button>
                 </div>
               </div>
