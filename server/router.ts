@@ -1,11 +1,10 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
-import superjson from 'superjson';
 import { getDb, getPool } from './db';
 import { casas, categorias, sugestoes, votos, divisoes } from './schema';
 import { eq, and, sql } from 'drizzle-orm';
 
-const t = initTRPC.create({ transformer: superjson });
+const t = initTRPC.create();
 const publicProcedure = t.procedure;
 
 export const appRouter = t.router({
