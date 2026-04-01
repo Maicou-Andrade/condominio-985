@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { appRouter } from './router';
 import { runMigrations } from './db';
-import { verifyGoogleToken, findCasaByEmail, generateSessionToken, verifySessionToken, ADMIN_EMAIL, impersonateCasa } from './auth';
+import { verifyGoogleToken, findCasaByEmail, generateSessionToken, verifySessionToken, ADMIN_EMAIL, impersonateCasa, isAdmin } from './auth';
 import path from 'path';
 
 const app = express();
@@ -65,7 +65,7 @@ app.post('/api/auth/logout', (_req, res) => {
 app.post('/api/auth/impersonate', (req, res) => {
   const token = (req as any).cookies?.session || req.headers.authorization?.replace('Bearer ', '');
   const currentUser = token ? verifySessionToken(token) : null;
-  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+  if (!isAdmin(currentUser)) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
 
@@ -75,9 +75,12 @@ app.post('/api/auth/impersonate', (req, res) => {
   impersonateCasa(casaId).then(targetUser => {
     if (!targetUser) return res.status(404).json({ error: 'Casa não encontrada' });
 
+    // Se voltando para conta admin, não marca como impersonado
+    const isReturningToAdmin = targetUser.email === ADMIN_EMAIL;
     const newToken = generateSessionToken({
       ...targetUser,
-      nome: `${targetUser.nome} (via Admin)`,
+      nome: isReturningToAdmin ? targetUser.nome : `${targetUser.nome} (via Admin)`,
+      impersonatedBy: isReturningToAdmin ? undefined : ADMIN_EMAIL,
     });
     res.cookie('session', newToken, {
       httpOnly: true,

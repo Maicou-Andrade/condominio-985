@@ -11,7 +11,10 @@ export interface AuthUser {
   casaNumero: string;
   nome: string;
   email: string;
+  impersonatedBy?: string; // email do admin que está impersonando
 }
+
+export const ADMIN_EMAIL = 'maicouandrade@msconsultoria.net.br';
 
 export async function verifyGoogleToken(credential: string): Promise<{ email: string; name: string; picture: string } | null> {
   try {
@@ -44,6 +47,11 @@ export function verifySessionToken(token: string): AuthUser | null {
   }
 }
 
+export function isAdmin(user: AuthUser | null): boolean {
+  if (!user) return false;
+  return user.email === ADMIN_EMAIL || user.impersonatedBy === ADMIN_EMAIL;
+}
+
 export async function findCasaByEmail(email: string): Promise<AuthUser | null> {
   const pool = getPool();
   const [rows] = await pool.query(
@@ -60,10 +68,8 @@ export async function findCasaByEmail(email: string): Promise<AuthUser | null> {
   };
 }
 
-export const ADMIN_EMAIL = 'maicouandrade@msconsultoria.net.br';
-
 export async function impersonateCasa(casaId: number): Promise<AuthUser | null> {
-  const pool = (await import('./db')).getPool();
+  const pool = getPool();
   const [rows] = await pool.query(
     'SELECT id, numero, nome_morador, email FROM casas WHERE id = ?',
     [casaId]
