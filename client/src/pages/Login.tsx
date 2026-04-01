@@ -28,7 +28,7 @@ export default function LoginPage() {
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent-yellow rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-4 sm:px-6">
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 rounded-2xl bg-accent-yellow mx-auto flex items-center justify-center shadow-2xl shadow-accent-yellow/30 mb-6">

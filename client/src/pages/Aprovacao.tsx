@@ -25,7 +25,7 @@ export default function AprovacaoPage() {
   return (
     <div className="animate-slide-up">
       <div className="mb-8">
-        <h1 className="font-display font-extrabold text-3xl text-navy-500">Votação das Ideias</h1>
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-navy-500">Votação das Ideias</h1>
         <p className="text-gray-500 mt-1">Acompanhe o status e vote nas sugestões</p>
       </div>
 

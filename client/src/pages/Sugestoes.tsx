@@ -150,12 +150,12 @@ export default function SugestoesPage() {
   return (
     <div className="animate-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-display font-extrabold text-3xl text-navy-500">Sugestões</h1>
+          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-navy-500">Sugestões</h1>
           <p className="text-gray-500 mt-1">Crie e acompanhe sugestões para o condomínio</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => setShowCatModal(true)}
             className="flex items-center gap-2 bg-white border border-gray-200 text-navy-500 px-4 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-all"
@@ -259,8 +259,8 @@ export default function SugestoesPage() {
 
       {/* New Category Modal */}
       {showCatModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowCatModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={() => setShowCatModal(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm p-5 sm:p-6 animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-lg text-navy-500">Nova Categoria</h2>
               <button onClick={() => setShowCatModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
@@ -292,7 +292,7 @@ export default function SugestoesPage() {
       {/* New Suggestion Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in overflow-y-auto py-8" onClick={() => resetForm()}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 animate-slide-up my-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg p-5 sm:p-6 animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="font-display font-bold text-xl text-navy-500">{editingId ? 'Editar Sugestão' : 'Nova Sugestão'}</h2>

@@ -109,9 +109,9 @@ export default function CasasPage() {
   return (
     <div className="animate-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-display font-extrabold text-3xl text-navy-500">Casas</h1>
+          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-navy-500">Casas</h1>
           <p className="text-gray-500 mt-1">Cadastro dos moradores do condomínio</p>
         </div>
         {casasDisponiveis.length > 0 && (
@@ -126,7 +126,7 @@ export default function CasasPage() {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {CASAS_OPTIONS.map((numero) => {
           const casa = casasQuery.data?.find(c => c.numero === numero);
           const isRegistered = !!casa;
@@ -233,8 +233,8 @@ export default function CasasPage() {
 
       {/* Modal Create/Edit */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={closeModal}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={closeModal}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display font-bold text-xl text-navy-500">
                 {editingCasa ? 'Editar Casa' : 'Cadastrar Casa'}

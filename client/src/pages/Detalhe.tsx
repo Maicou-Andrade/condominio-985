@@ -130,9 +130,9 @@ export default function DetalhePage() {
         Voltar para Votação
       </button>
 
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-navy-500">
+          <h1 className="font-display font-extrabold text-xl sm:text-2xl text-navy-500">
             {sug.categoria_nome || sug.item_tipo || sug.item_outros || 'Sugestão #' + sug.id}
           </h1>
           <p className="text-gray-500 mt-1">
@@ -322,7 +322,7 @@ export default function DetalhePage() {
           <p className="text-sm text-amber-700 mb-4">
             Nem todos aprovaram. Você pode avançar com a ideia dividindo entre os interessados ou desistir.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={() => {
                 const initial: Record<string, string> = {};
@@ -353,7 +353,7 @@ export default function DetalhePage() {
           </h3>
 
           {/* Valores Estimados */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
             <div className="bg-white/60 rounded-xl p-3">
               <p className="text-[10px] text-green-600 font-semibold uppercase">Valor Estimado Produto</p>
               <p className="text-lg font-bold text-green-800">R$ {valorEstimadoProduto.toFixed(2)}</p>
@@ -376,7 +376,7 @@ export default function DetalhePage() {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={gerarWhatsAppAprovado}
               className="flex-1 px-4 py-3 rounded-xl bg-green-500 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-green-600 transition-all"
@@ -401,7 +401,7 @@ export default function DetalhePage() {
           <h3 className="font-display font-bold text-purple-800 mb-4">🏆 Projeto Concluído</h3>
 
           {/* Comparação Estimado vs Real */}
-          <div className="grid grid-cols-2 gap-3 mb-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2">
             <div className="bg-white/60 rounded-xl p-3">
               <p className="text-[10px] text-gray-400 font-semibold uppercase">Estimado Produto</p>
               <p className="text-base font-bold text-gray-500">R$ {valorEstimadoProduto.toFixed(2)}</p>
@@ -411,7 +411,7 @@ export default function DetalhePage() {
               <p className="text-base font-bold text-gray-500">R$ {valorEstimadoServico.toFixed(2)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2">
             <div className="bg-white/60 rounded-xl p-3 border-2 border-purple-200">
               <p className="text-[10px] text-purple-500 font-semibold uppercase">Real Produto</p>
               <p className="text-xl font-bold text-purple-800">R$ {parseFloat(sug.valor_total_gasto_produto || 0).toFixed(2)}</p>
@@ -468,8 +468,8 @@ export default function DetalhePage() {
 
       {/* Vote Modal */}
       {showVoteModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowVoteModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={() => setShowVoteModal(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-lg text-navy-500">Votar</h2>
               <button onClick={() => setShowVoteModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
@@ -548,8 +548,8 @@ export default function DetalhePage() {
 
       {/* Divisão Modal */}
       {showDivisaoModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowDivisaoModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={() => setShowDivisaoModal(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-lg text-navy-500">Dividir Despesa</h2>
               <button onClick={() => setShowDivisaoModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
@@ -601,8 +601,8 @@ export default function DetalhePage() {
 
       {/* Concluir Modal */}
       {showConcluirModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowConcluirModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={() => setShowConcluirModal(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-lg text-navy-500">Concluir Projeto</h2>
               <button onClick={() => setShowConcluirModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>

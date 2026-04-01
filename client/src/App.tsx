@@ -1,7 +1,8 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home, Lightbulb, CheckCircle, LogOut } from 'lucide-react';
+import { Home, Lightbulb, CheckCircle, LogOut, Menu, X } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './auth';
+import { useState } from 'react';
 import LoginPage from './pages/Login';
 import CasasPage from './pages/Casas';
 import SugestoesPage from './pages/Sugestoes';
@@ -11,12 +12,13 @@ import DetalhePage from './pages/Detalhe';
 const navItems = [
   { path: '/', label: 'Casas', icon: Home },
   { path: '/sugestoes', label: 'Sugestões', icon: Lightbulb },
-  { path: '/aprovacao', label: 'Votação das Ideias', icon: CheckCircle },
+  { path: '/aprovacao', label: 'Votação', icon: CheckCircle },
 ];
 
 export default function App() {
   const location = useLocation();
   const { user, loading, logout, hasCasas } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -35,7 +37,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Toaster position="top-right" />
-        <div className="max-w-3xl mx-auto py-12 px-6">
+        <div className="max-w-3xl mx-auto py-8 px-4">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl bg-accent-yellow mx-auto flex items-center justify-center mb-4">
               <span className="font-display font-extrabold text-navy-500 text-2xl">985</span>
@@ -58,13 +60,65 @@ export default function App() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex">
-      <Toaster position="top-right" />
+  const isImpersonating = user.nome.includes('(via Admin)');
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-navy-500 min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-40">
-        {/* Logo */}
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      <Toaster position="top-center" />
+
+      {/* Mobile Header */}
+      <header className="lg:hidden bg-navy-500 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-accent-yellow flex items-center justify-center">
+            <span className="text-navy-500 font-display font-extrabold text-sm">985</span>
+          </div>
+          <span className="font-display font-bold text-white text-sm">Condomínio</span>
+        </div>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white">
+          {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 top-[52px] z-40 animate-fade-in" onClick={() => setSidebarOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-navy-500 p-4 space-y-1 animate-slide-up" onClick={e => e.stopPropagation()}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isActive ? 'bg-white/15 text-white' : 'text-navy-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={20} />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+            <div className="border-t border-white/10 pt-3 mt-3">
+              <div className="flex items-center gap-3 px-4 py-2">
+                <div className="w-8 h-8 rounded-full bg-accent-blue/30 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">{user.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-xs font-medium truncate">{user.nome}</p>
+                  <p className="text-navy-300 text-[10px]">{user.casaNumero}</p>
+                </div>
+                <button onClick={logout} className="p-2 text-navy-300 hover:text-white"><LogOut size={16} /></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-64 bg-navy-500 min-h-screen flex-col fixed left-0 top-0 bottom-0 z-40">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-accent-yellow flex items-center justify-center">
@@ -76,8 +130,6 @@ export default function App() {
             </div>
           </div>
         </div>
-
-        {/* Nav */}
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -87,9 +139,7 @@ export default function App() {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-white/15 text-white shadow-lg shadow-black/20'
-                    : 'text-navy-200 hover:bg-white/5 hover:text-white'
+                  isActive ? 'bg-white/15 text-white shadow-lg shadow-black/20' : 'text-navy-200 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
@@ -98,24 +148,17 @@ export default function App() {
             );
           })}
         </nav>
-
-        {/* User Info + Logout */}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 px-3 mb-3">
             <div className="w-9 h-9 rounded-full bg-accent-blue/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-bold">
-                {user.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </span>
+              <span className="text-white text-xs font-bold">{user.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-medium truncate">{user.nome}</p>
               <p className="text-navy-300 text-[10px] truncate">{user.casaNumero}</p>
             </div>
           </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-navy-300 hover:text-white hover:bg-white/5 transition-all text-xs"
-          >
+          <button onClick={logout} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-navy-300 hover:text-white hover:bg-white/5 transition-all text-xs">
             <LogOut size={14} />
             Sair
           </button>
@@ -129,11 +172,11 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64">
-        {user.nome.includes('(via Admin)') && (
-          <div className="bg-amber-400 px-6 py-2 flex items-center justify-between">
+      <main className="flex-1 lg:ml-64">
+        {isImpersonating && (
+          <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
             <p className="text-navy-500 text-xs font-semibold">
-              👁️ Visualizando como <strong>{user.casaNumero}</strong> — {user.nome.replace(' (via Admin)', '')}
+              👁️ Visualizando como <strong>{user.casaNumero}</strong>
             </p>
             <button
               onClick={async () => {
@@ -148,13 +191,13 @@ export default function App() {
                   window.location.reload();
                 } else { logout(); }
               }}
-              className="px-3 py-1 rounded-lg bg-navy-500 text-white text-xs font-semibold hover:bg-navy-600 transition-all"
+              className="px-3 py-1 rounded-lg bg-navy-500 text-white text-xs font-semibold"
             >
-              Voltar para minha conta
+              Voltar
             </button>
           </div>
         )}
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
           <Routes>
             <Route path="/" element={<CasasPage />} />
             <Route path="/sugestoes" element={<SugestoesPage />} />
@@ -163,6 +206,28 @@ export default function App() {
           </Routes>
         </div>
       </main>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-bottom">
+        <div className="flex items-center justify-around py-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path || (item.path === '/aprovacao' && location.pathname.startsWith('/aprovacao'));
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${
+                  isActive ? 'text-navy-500' : 'text-gray-400'
+                }`}
+              >
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
