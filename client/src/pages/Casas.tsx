@@ -1,15 +1,41 @@
 import { useState } from 'react';
 import { trpc } from '../trpc';
-import { Home, Plus, Trash2, User, Mail, Phone, X, Pencil } from 'lucide-react';
+import { useAuth } from '../auth';
+import { Home, Plus, Trash2, User, Mail, Phone, X, Pencil, LogIn } from 'lucide-react';
 import { maskPhone } from '../utils';
 import toast from 'react-hot-toast';
 
 const CASAS_OPTIONS = ['Casa 01', 'Casa 02', 'Casa 03', 'Casa 04', 'Casa 05'];
+const ADMIN_EMAIL = 'maicouandrade@msconsultoria.net.br';
 
 export default function CasasPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
   const [showModal, setShowModal] = useState(false);
   const [editingCasa, setEditingCasa] = useState<any>(null);
   const [form, setForm] = useState({ numero: '', nomeMorador: '', email: '', telefone: '' });
+
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') return '';
+    return 'http://localhost:3000';
+  };
+
+  async function impersonate(casaId: number, casaNumero: string) {
+    try {
+      const res = await fetch(`${getBaseUrl()}/api/auth/impersonate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ casaId }),
+      });
+      if (res.ok) {
+        toast.success(`Acessando como ${casaNumero}`);
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        toast.error('Erro ao acessar como usuário');
+      }
+    } catch { toast.error('Erro de conexão'); }
+  }
 
   const casasQuery = trpc.casas.list.useQuery();
   const createMutation = trpc.casas.create.useMutation({
@@ -160,10 +186,20 @@ export default function CasasPage() {
                       {casa.telefone}
                     </div>
                   )}
-                  <div className="mt-3">
+                  <div className="mt-3 flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-green/10 text-accent-green text-xs font-semibold">
                       ● Cadastrada
                     </span>
+                    {isAdmin && casa.email !== ADMIN_EMAIL && (
+                      <button
+                        onClick={() => impersonate(casa.id, casa.numero)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-blue/10 text-accent-blue text-xs font-semibold hover:bg-accent-blue/20 transition-all"
+                        title="Acessar como este usuário"
+                      >
+                        <LogIn size={12} />
+                        Acessar como
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (

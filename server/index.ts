@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { appRouter } from './router';
 import { runMigrations } from './db';
-import { verifyGoogleToken, findCasaByEmail, generateSessionToken, verifySessionToken } from './auth';
+import { verifyGoogleToken, findCasaByEmail, generateSessionToken, verifySessionToken, ADMIN_EMAIL, impersonateCasa } from './auth';
 import path from 'path';
 
 const app = express();
@@ -60,6 +60,33 @@ app.get('/api/auth/me', (req, res) => {
 app.post('/api/auth/logout', (_req, res) => {
   res.clearCookie('session');
   return res.json({ success: true });
+});
+
+app.post('/api/auth/impersonate', (req, res) => {
+  const token = (req as any).cookies?.session || req.headers.authorization?.replace('Bearer ', '');
+  const currentUser = token ? verifySessionToken(token) : null;
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  const { casaId } = req.body;
+  if (!casaId) return res.status(400).json({ error: 'casaId required' });
+
+  impersonateCasa(casaId).then(targetUser => {
+    if (!targetUser) return res.status(404).json({ error: 'Casa não encontrada' });
+
+    const newToken = generateSessionToken({
+      ...targetUser,
+      nome: `${targetUser.nome} (via Admin)`,
+    });
+    res.cookie('session', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return res.json({ user: targetUser, token: newToken });
+  }).catch(() => res.status(500).json({ error: 'Erro interno' }));
 });
 
 // ===== tRPC =====

@@ -59,3 +59,21 @@ export async function findCasaByEmail(email: string): Promise<AuthUser | null> {
     email: casa.email,
   };
 }
+
+export const ADMIN_EMAIL = 'maicouandrade@msconsultoria.net.br';
+
+export async function impersonateCasa(casaId: number): Promise<AuthUser | null> {
+  const pool = (await import('./db')).getPool();
+  const [rows] = await pool.query(
+    'SELECT id, numero, nome_morador, email FROM casas WHERE id = ?',
+    [casaId]
+  ) as any;
+  if (rows.length === 0) return null;
+  const casa = rows[0];
+  return {
+    casaId: casa.id,
+    casaNumero: casa.numero,
+    nome: casa.nome_morador,
+    email: casa.email,
+  };
+}

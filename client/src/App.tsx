@@ -130,6 +130,30 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 ml-64">
+        {user.nome.includes('(via Admin)') && (
+          <div className="bg-amber-400 px-6 py-2 flex items-center justify-between">
+            <p className="text-navy-500 text-xs font-semibold">
+              👁️ Visualizando como <strong>{user.casaNumero}</strong> — {user.nome.replace(' (via Admin)', '')}
+            </p>
+            <button
+              onClick={async () => {
+                const base = window.location.hostname !== 'localhost' ? '' : 'http://localhost:3000';
+                const casas = await fetch(`${base}/trpc/casas.list`).then(r => r.json());
+                const adminCasa = (casas?.result?.data || []).find((c: any) => c.email === 'maicouandrade@msconsultoria.net.br');
+                if (adminCasa) {
+                  await fetch(`${base}/api/auth/impersonate`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', body: JSON.stringify({ casaId: adminCasa.id }),
+                  });
+                  window.location.reload();
+                } else { logout(); }
+              }}
+              className="px-3 py-1 rounded-lg bg-navy-500 text-white text-xs font-semibold hover:bg-navy-600 transition-all"
+            >
+              Voltar para minha conta
+            </button>
+          </div>
+        )}
         <div className="p-8 max-w-6xl mx-auto">
           <Routes>
             <Route path="/" element={<CasasPage />} />
