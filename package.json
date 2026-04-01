@@ -1,0 +1,37 @@
+{
+  "name": "condominio-985",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:client": "cd client && vite",
+    "build": "cd client && vite build",
+    "start": "node dist/index.js",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --outfile=dist/index.js --external:mysql2 --external:better-sqlite3 --format=cjs --target=node18"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^4.36.1",
+    "@trpc/client": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
+    "@trpc/server": "^10.45.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.33.0",
+    "express": "^4.21.0",
+    "mysql2": "^3.11.3",
+    "resend": "^4.0.0",
+    "superjson": "^2.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.5",
+    "concurrently": "^9.0.1",
+    "drizzle-kit": "^0.24.2",
+    "esbuild": "^0.23.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}
