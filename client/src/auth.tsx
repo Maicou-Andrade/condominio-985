@@ -5,6 +5,8 @@ export interface AuthUser {
   casaNumero: string;
   nome: string;
   email: string;
+  impersonatedBy?: string;
+  deveTrocarSenha?: boolean;
 }
 
 interface AuthCtx {
@@ -12,14 +14,16 @@ interface AuthCtx {
   loading: boolean;
   hasCasas: boolean;
   login: (credential: string) => Promise<{ success: boolean; error?: string; data?: any }>;
+  loginWithPassword: (email: string, senha: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (novaSenha: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx>({
-  user: null,
-  loading: true,
-  hasCasas: true,
+  user: null, loading: true, hasCasas: true,
   login: async () => ({ success: false }),
+  loginWithPassword: async () => ({ success: false }),
+  changePassword: async () => ({ success: false }),
   logout: async () => {},
 });
 
@@ -48,20 +52,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credential: string) => {
     try {
       const res = await fetch(`${getBaseUrl()}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ credential }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', body: JSON.stringify({ credential }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        return { success: true };
-      }
+      if (res.ok) { setUser(data.user); return { success: true }; }
       return { success: false, error: data.error, data };
-    } catch (err) {
-      return { success: false, error: 'network_error' };
-    }
+    } catch { return { success: false, error: 'network_error' }; }
+  };
+
+  const loginWithPassword = async (email: string, senha: string) => {
+    try {
+      const res = await fetch(`${getBaseUrl()}/api/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', body: JSON.stringify({ email, senha }),
+      });
+      const data = await res.json();
+      if (res.ok) { setUser(data.user); return { success: true }; }
+      return { success: false, error: data.error };
+    } catch { return { success: false, error: 'Erro de conexão' }; }
+  };
+
+  const changePassword = async (novaSenha: string) => {
+    try {
+      const res = await fetch(`${getBaseUrl()}/api/auth/change-password`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', body: JSON.stringify({ novaSenha }),
+      });
+      const data = await res.json();
+      if (res.ok) { setUser(u => u ? { ...u, deveTrocarSenha: false } : null); return { success: true }; }
+      return { success: false, error: data.error };
+    } catch { return { success: false, error: 'Erro de conexão' }; }
   };
 
   const logout = async () => {
@@ -70,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, hasCasas, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, hasCasas, login, loginWithPassword, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

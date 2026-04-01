@@ -17,7 +17,7 @@ COPY . .
 RUN cd client && npx vite build
 
 # Build server
-RUN npx esbuild server/index.ts --bundle --platform=node --outfile=dist/index.js --external:mysql2 --external:better-sqlite3 --external:react --external:react-dom --external:react/jsx-runtime --external:react-dom/server --format=cjs --target=node18
+RUN npx esbuild server/index.ts --bundle --platform=node --outfile=dist/index.js --external:mysql2 --external:better-sqlite3 --external:react --external:react-dom --external:react/jsx-runtime --external:react-dom/server --external:bcryptjs --format=cjs --target=node18
 
 # Copy client dist to dist/public
 RUN cp -r client/dist dist/public

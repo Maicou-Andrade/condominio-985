@@ -13,7 +13,9 @@ export default function CasasPage() {
   const isAdmin = user?.email === ADMIN_EMAIL;
   const [showModal, setShowModal] = useState(false);
   const [editingCasa, setEditingCasa] = useState<any>(null);
-  const [form, setForm] = useState({ numero: '', nomeMorador: '', email: '', telefone: '' });
+  const [form, setForm] = useState({ numero: '', nomeMorador: '', email: '', telefone: '', senha: '' });
+
+  const isEmailGmail = form.email.toLowerCase().endsWith('@gmail.com') || form.email === '';
 
   const getBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') return '';
@@ -66,7 +68,7 @@ export default function CasasPage() {
 
   function openCreate(preselect?: string) {
     setEditingCasa(null);
-    setForm({ numero: preselect || '', nomeMorador: '', email: '', telefone: '' });
+    setForm({ numero: preselect || '', nomeMorador: '', email: '', telefone: '', senha: '' });
     setShowModal(true);
   }
 
@@ -77,6 +79,7 @@ export default function CasasPage() {
       nomeMorador: casa.nomeMorador,
       email: casa.email,
       telefone: maskPhone(casa.telefone || ''),
+      senha: '',
     });
     setShowModal(true);
   }
@@ -84,12 +87,17 @@ export default function CasasPage() {
   function closeModal() {
     setShowModal(false);
     setEditingCasa(null);
-    setForm({ numero: '', nomeMorador: '', email: '', telefone: '' });
+    setForm({ numero: '', nomeMorador: '', email: '', telefone: '', senha: '' });
   }
 
   function handleSave() {
     if (!form.numero || !form.nomeMorador || !form.email) {
       toast.error('Preencha os campos obrigatórios');
+      return;
+    }
+    const isGmail = form.email.toLowerCase().endsWith('@gmail.com');
+    if (!isGmail && !editingCasa && !form.senha) {
+      toast.error('Senha obrigatória para e-mails não Gmail');
       return;
     }
     if (editingCasa) {
@@ -291,6 +299,20 @@ export default function CasasPage() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue text-sm"
                 />
               </div>
+
+              {!isEmailGmail && form.email && !editingCasa && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs text-amber-700 font-semibold mb-2">⚠️ E-mail não é Gmail — senha obrigatória</p>
+                  <input
+                    type="password"
+                    value={form.senha}
+                    onChange={e => setForm(f => ({ ...f, senha: e.target.value }))}
+                    placeholder="Criar senha de acesso"
+                    className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300/30 text-sm"
+                  />
+                  <p className="text-[10px] text-amber-500 mt-1.5">No primeiro login, o morador terá que trocar a senha.</p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6">

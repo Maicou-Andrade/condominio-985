@@ -21,22 +21,29 @@ export const appRouter = t.router({
         nomeMorador: z.string().min(1),
         email: z.string().email(),
         telefone: z.string().optional(),
+        senha: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const db = getDb();
+        const pool = getPool();
         // Check max 5
         const existing = await db.select().from(casas);
         if (existing.length >= 5) throw new Error('Máximo de 5 casas atingido');
-        // Check unique
         const dup = existing.find(c => c.numero === input.numero);
         if (dup) throw new Error(`${input.numero} já está cadastrada`);
 
-        await db.insert(casas).values({
-          numero: input.numero,
-          nomeMorador: input.nomeMorador,
-          email: input.email,
-          telefone: input.telefone || null,
-        });
+        const isGmail = input.email.toLowerCase().endsWith('@gmail.com');
+        let senhaHash = null;
+        if (!isGmail) {
+          if (!input.senha) throw new Error('Senha obrigatória para e-mails não Gmail');
+          const bcrypt = await import('bcryptjs');
+          senhaHash = await bcrypt.hash(input.senha, 10);
+        }
+
+        await pool.query(
+          'INSERT INTO casas (numero, nome_morador, email, telefone, senha, deve_trocar_senha) VALUES (?, ?, ?, ?, ?, ?)',
+          [input.numero, input.nomeMorador, input.email, input.telefone || null, senhaHash, !isGmail]
+        );
         return { success: true };
       }),
 

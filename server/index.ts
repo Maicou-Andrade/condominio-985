@@ -62,6 +62,75 @@ app.post('/api/auth/logout', (_req, res) => {
   return res.json({ success: true });
 });
 
+// Email/Password login for non-Gmail users
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+    if (!email || !senha) return res.status(400).json({ error: 'Email e senha obrigatórios' });
+
+    const bcrypt = await import('bcryptjs');
+    const pool = (await import('./db')).getPool();
+    const [rows] = await pool.query('SELECT * FROM casas WHERE email = ?', [email]) as any;
+    if (rows.length === 0) return res.status(403).json({ error: 'E-mail não cadastrado' });
+
+    const casa = rows[0];
+    if (!casa.senha) return res.status(403).json({ error: 'Esta casa usa login com Google' });
+
+    const valid = await bcrypt.compare(senha, casa.senha);
+    if (!valid) return res.status(401).json({ error: 'Senha incorreta' });
+
+    const user = {
+      casaId: casa.id,
+      casaNumero: casa.numero,
+      nome: casa.nome_morador,
+      email: casa.email,
+      deveTrocarSenha: !!casa.deve_trocar_senha,
+    };
+
+    const token = generateSessionToken(user as any);
+    res.cookie('session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return res.json({ user, token });
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
+// Change password
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    const token = (req as any).cookies?.session || req.headers.authorization?.replace('Bearer ', '');
+    const currentUser = token ? verifySessionToken(token) : null;
+    if (!currentUser) return res.status(401).json({ error: 'Não autenticado' });
+
+    const { novaSenha } = req.body;
+    if (!novaSenha || novaSenha.length < 4) return res.status(400).json({ error: 'Senha deve ter pelo menos 4 caracteres' });
+
+    const bcrypt = await import('bcryptjs');
+    const pool = (await import('./db')).getPool();
+    const hash = await bcrypt.hash(novaSenha, 10);
+    await pool.query('UPDATE casas SET senha = ?, deve_trocar_senha = FALSE WHERE id = ?', [hash, currentUser.casaId]);
+
+    // Regenerate token without deveTrocarSenha
+    const newToken = generateSessionToken({ ...currentUser, deveTrocarSenha: undefined } as any);
+    res.cookie('session', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
 app.post('/api/auth/impersonate', (req, res) => {
   const token = (req as any).cookies?.session || req.headers.authorization?.replace('Bearer ', '');
   const currentUser = token ? verifySessionToken(token) : null;

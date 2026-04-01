@@ -1,8 +1,9 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { Home, Lightbulb, CheckCircle, LogOut, Menu, X } from 'lucide-react';
+import { Home, Lightbulb, CheckCircle, LogOut, Menu, X, Lock } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './auth';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import LoginPage from './pages/Login';
 import CasasPage from './pages/Casas';
 import SugestoesPage from './pages/Sugestoes';
@@ -17,8 +18,11 @@ const navItems = [
 
 export default function App() {
   const location = useLocation();
-  const { user, loading, logout, hasCasas } = useAuth();
+  const { user, loading, logout, hasCasas, changePassword } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmSenha, setConfirmSenha] = useState('');
+  const [changingPw, setChangingPw] = useState(false);
 
   if (loading) {
     return (
@@ -61,6 +65,66 @@ export default function App() {
   }
 
   const isImpersonating = user.nome.includes('(via Admin)');
+
+  // First login - force password change
+  if (user.deveTrocarSenha) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-500 via-navy-500 to-accent-blue p-4">
+        <Toaster position="top-center" />
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 rounded-xl bg-accent-yellow/20 mx-auto flex items-center justify-center mb-3">
+              <Lock size={24} className="text-accent-yellow" />
+            </div>
+            <h2 className="font-display font-bold text-xl text-navy-500">Trocar Senha</h2>
+            <p className="text-gray-400 text-xs mt-1">
+              Olá <strong>{user.nome}</strong>, crie uma nova senha para continuar.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-navy-500 mb-1">Nova Senha</label>
+              <input
+                type="password"
+                value={novaSenha}
+                onChange={e => setNovaSenha(e.target.value)}
+                placeholder="Mínimo 4 caracteres"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-navy-500 mb-1">Confirmar Senha</label>
+              <input
+                type="password"
+                value={confirmSenha}
+                onChange={e => setConfirmSenha(e.target.value)}
+                placeholder="Repita a senha"
+                onKeyDown={e => e.key === 'Enter' && !changingPw && novaSenha && handleChangePw()}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 text-sm"
+              />
+            </div>
+            <button
+              onClick={handleChangePw}
+              disabled={changingPw}
+              className="w-full px-4 py-3 rounded-xl bg-navy-500 text-white font-semibold text-sm hover:bg-navy-600 transition-all disabled:opacity-50 mt-2"
+            >
+              {changingPw ? 'Salvando...' : 'Salvar Nova Senha'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  async function handleChangePw() {
+    if (novaSenha.length < 4) { toast.error('Senha deve ter pelo menos 4 caracteres'); return; }
+    if (novaSenha !== confirmSenha) { toast.error('Senhas não conferem'); return; }
+    setChangingPw(true);
+    const result = await changePassword(novaSenha);
+    setChangingPw(false);
+    if (result.success) { toast.success('Senha alterada com sucesso!'); }
+    else { toast.error(result.error || 'Erro ao alterar senha'); }
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">

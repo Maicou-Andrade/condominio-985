@@ -108,6 +108,10 @@ export async function runMigrations() {
       `);
     }
 
+    // Add senha columns for non-Gmail users
+    try { await conn.query('ALTER TABLE casas ADD COLUMN senha VARCHAR(255)'); } catch {}
+    try { await conn.query('ALTER TABLE casas ADD COLUMN deve_trocar_senha BOOLEAN DEFAULT TRUE'); } catch {}
+
     console.log('✅ Migrations executed successfully');
   } catch (err) {
     console.error('Migration error:', err);
