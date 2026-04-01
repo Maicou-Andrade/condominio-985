@@ -291,7 +291,7 @@ export default function DetalhePage() {
       </div>
 
       {/* Actions based on status */}
-      {sug.status === 'aprovada_parcial' && (
+      {sug.status === 'aprovada_parcial' && user && sug.casa_id === user.casaId && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mt-6">
           <h3 className="font-display font-bold text-amber-800 mb-2">Aprovação Parcial</h3>
           <p className="text-sm text-amber-700 mb-4">
@@ -336,12 +336,14 @@ export default function DetalhePage() {
               ))}
             </div>
           )}
-          <button
-            onClick={() => setShowConcluirModal(true)}
-            className="w-full px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm"
-          >
-            🏁 Concluir Projeto
-          </button>
+          {user && sug.casa_id === user.casaId && (
+            <button
+              onClick={() => setShowConcluirModal(true)}
+              className="w-full px-4 py-3 rounded-xl bg-accent-green text-white font-semibold text-sm"
+            >
+              🏁 Concluir Projeto
+            </button>
+          )}
         </div>
       )}
 

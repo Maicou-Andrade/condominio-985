@@ -304,17 +304,17 @@ export const appRouter = t.router({
         const votesNeeded = totalCasas - 1;
 
         const [votosCount] = await pool.query(
-          'SELECT COUNT(*) as total, SUM(voto = "sim") as sim, SUM(voto = "nao") as nao FROM votos WHERE sugestao_id = ?',
+          'SELECT COUNT(*) as total, COALESCE(SUM(voto = "sim"), 0) as sim, COALESCE(SUM(voto = "nao"), 0) as nao FROM votos WHERE sugestao_id = ?',
           [input.sugestaoId]
         ) as any;
 
         if (votosCount[0].total >= votesNeeded) {
-          const allSim = votosCount[0].nao === 0;
-          const newStatus = allSim ? 'aprovada_total' : 'aprovada_parcial';
+          const naoCount = parseInt(votosCount[0].nao);
+          const newStatus = naoCount === 0 ? 'aprovada_total' : 'aprovada_parcial';
           await pool.query('UPDATE sugestoes SET status = ? WHERE id = ?', [newStatus, input.sugestaoId]);
 
           // If all approved, auto-divide equally
-          if (allSim) {
+          if (naoCount === 0) {
             const [sug] = await pool.query('SELECT * FROM sugestoes WHERE id = ?', [input.sugestaoId]) as any;
             const valorTotal = parseFloat(sug[0].valor_produto || sug[0].sugestao_valor_produto || 0) +
                                parseFloat(sug[0].valor_servico || sug[0].sugestao_valor_servico || 0);
